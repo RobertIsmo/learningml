@@ -15,7 +15,7 @@ const leastsquareserror = {
 
 const linear = (lr) => {
 	return (delta) => {
-		return Matrix.apply(delta, x=>(-lr*x)+(.2*Math.random()-.1))
+		return Matrix.apply(delta, x=>(-lr*x))
 	}
 }
 

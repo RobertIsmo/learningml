@@ -1,48 +1,49 @@
-const util = require('util')
+const util = require('node:util');
 
 const Matrix = require('./matrix');
-const Layer = require('./layers');
+const Vector = require('./vector');
+const Cost = require('./costfunctions');
+const Optimizer = require('./optimizer');
+const F = require('./forward');
+const Layer = require('./layer');
 const Network = require('./network');
-const Optimization = require('./optimization');
+const Trainer = require('./train');
 
-let network = Network.generate(Network.network(
-	3,3,
-	[
-		Layer.layer(Layer.simple(5),Layer.sigmoid),
-		Layer.layer(Layer.simple(5),Layer.relu),
-		Layer.layer(Layer.simple(5),Layer.sigmoid),
-		Layer.layer(Layer.simple(10),Layer.relu),
-		Layer.layer(Layer.simple(10),Layer.sigmoid),
-		Layer.layer(Layer.simple(5),Layer.relu),
-		Layer.layer(Layer.simple(3),Layer.sigmoid),
-	]
-))
+
+const print = x=> console.log(
+	util.inspect(
+		x,
+		false,null,true)
+);
 
 const inputs = (n) => {
 	let array = []
 	for(let i = 0; i < n; i++) {
 		const k = 5*Math.random();
-		array.push(Matrix.vec(k, k+1, k+2))
+		array.push(Vector.vector(k))
 	}
 	return array
 }
 const outputs = (inputs) => {
 	let array = []
 	inputs.forEach(input => {
-		array.push(Matrix.apply(input, x=>x+3))
+		array.push(input.apply(x=>x/2))
 	});
 	return array
 }
 
-let trainingdata = [inputs(1000), 0]
-trainingdata[1] = outputs(trainingdata[0])
+const input = inputs(50);
 
-network = Optimization.train(trainingdata[0], trainingdata[1], network, 300, Optimization.leastsquareserror, Optimization.linear(.0015333));
+const prenetwork = Network.network(1,1,
+	[
+		Layer.layer(Layer.simple(1), Layer.relu)
+	]
+);
 
-console.log(
-	util.inspect(
-		Network.feedforward(Matrix.vec(3,9,18), network).output.values,
-		//Matrix.subtract(o, image),
-		{depth: null, colors: true}
-	)
-)
+let network = Network.generate(prenetwork)
+
+network = Trainer.train(input,outputs(input),network,450,Cost.leastsquares,Optimizer.linear(.01));
+
+for(let i = 1; i < 11; i++) {
+	print(F.feedforward(Vector.vector(i),network).output.values)
+}

@@ -1,27 +1,92 @@
 const assert = require('./assert');
 
-const matrix = (row, col, values) => {
+const copy = (array) => JSON.parse(JSON.stringify(array))
+
+const matrix = (row, col, values, isvec=false) => {
 	assert(row === values.length)
 	for (let i = 0; i < values.length; i++) {
 		const element = values[i];
 		assert(col === element.length)
 	}
-	return {
+	const getter = (obj) => {
+		return isvec? (i) => obj.values[i][0] : (i, j) => obj.values[i][j]
+	}
+	const setter = (obj) => {
+		return isvec? (i, v) => {
+			let newvalues = copy(obj.values)
+			newvalues[i][0] = v;
+			return matrix_from_array(newvalues, true)
+		} : 
+		(i, j, v) => {
+			let newvalues = copy(obj.values)
+			newvalues[i][j] = v;
+			return matrix_from_array(newvalues)
+		}
+	}
+	const getrow = (obj) => {
+		return isvec? (row) => matrix_from_array([obj.values[row]], true)
+		:
+		(row) => matrix_from_array(obj.values[row].map(x=>[x]), true);
+	}
+	const getcol = (obj) => {
+		return isvec? () => {
+			return obj
+		} :
+		(col) => {
+			let colomn = Array(obj.rows)
+			for (let i = 0; i < obj.rows; i++) {
+				colomn[i] = [obj.values[i][col]];
+			}
+			return matrix_from_array(colomn.map(x=>[x]), true)
+		}
+	}
+	const apply = (obj) => {
+		return (f) => {
+			let m = copy(obj.values);
+			for (let i = 0; i < obj.rows; i++) {
+				for (let j = 0; j < obj.colomns; j++) {
+					m[i][j] = f(m[i][j])
+				}
+			}
+			return matrix(obj.rows, obj.colomns, m, obj.isvec)
+		}
+	}
+	const transpose = (obj) => {
+		return () => {
+			let m = Array(obj.colomns)
+			for(let i = 0; i < obj.colomns; i++) {
+				let row = Array(obj.rows)
+				for(let j = 0; j < obj.rows; j++) {
+					row[j] = obj.values[j][i]
+				}
+				m[i] = row
+			}
+			return matrix(obj.colomns, obj.rows, m)
+		}
+	}
+	const clone = (obj) => () => copy(obj)
+	const obj =  {
 		rows: row,
 		colomns: col,
 		values,
-		ismatrix: true
+		ismatrix: true,
+		isvec
 	}
+	obj.get = getter(obj)
+	obj.set = setter(obj)
+	obj.getrow = getrow(obj)
+	obj.getcol = getcol(obj)
+	obj.apply = apply(obj)
+	obj.transpose = transpose(obj)
+	obj.copy = clone(obj)
+	return obj
 }
-const vec = (...args) => {
-	const size = args.length
-	let vector = Array(size)
-	for (let i = 0; i < size; i++) {
-		vector[i] = [args[i]]
-	}
-	return matrix(size, 1, vector)
+const matrix_from_array = (values, isvec=false) => {
+	const row = values.length
+	const col = values[0].length
+	return matrix(row, col, values, isvec)
 }
-const constant = (row, col, c) => {
+const constant = (row, col, c, isvec=false) => {
 	let m = Array(row);
 	for (let i = 0; i < row; i++) {
 		let r = Array(col)
@@ -30,9 +95,9 @@ const constant = (row, col, c) => {
 		}
 		m[i] = r
 	}
-	return matrix(row, col, m)
+	return matrix(row, col, m, isvec)
 }
-const random = (row, col) => {
+const random = (row, col, isvec=false) => {
 	let m = Array(row);
 	for (let i = 0; i < row; i++) {
 		let r = Array(col)
@@ -41,103 +106,7 @@ const random = (row, col) => {
 		}
 		m[i] = r
 	}
-	return matrix(row, col, m)
-}
-const get = (mat, i, j) => {
-	return mat.values[i][j]
-}
-const set = (mat, i, j, value) => {
-	mat.values[i][j] = value
-}
-const getrow = (mat, row) => {
-	return mat.values[row];
-}
-const getcol = (mat, col) => {
-	let colomn = Array(mat.rows)
-	for (let i = 0; i < mat.rows; i++) {
-		colomn[i] = mat.values[i][col];
-	}
-	return colomn
-}
-const dot = (v1, v2) => {
-	assert(v1.length === v2.length);
-	let v3 = Array(v1.length);
-	for (let i = 0; i < v1.length; i++) {
-		v3[i] = v1[i] * v2[i]
-	}
-	return v3.reduce((p, c) => p + c)
-}
-const multiply = (m1, m2) => {
-	assert(m1.colomns === m2.rows)
-	let m3 = Array(m1.rows)
-	for (let i = 0; i < m1.rows; i++) {
-		let row = Array(m2.colomns);
-		for (let j = 0; j < m2.colomns; j++) {
-			row[j] = dot(
-				getrow(m1, i),
-				getcol(m2, j)
-			)
-		}
-		m3[i] = row
-	}
-	return matrix(m1.rows, m2.colomns, m3)
-}
-const add = (m1, m2) => {
-	assert(m1.rows === m2.rows && m1.colomns === m2.colomns)
-	let m3 = Array(m1.rows)
-	for (let i = 0; i < m1.rows; i++) {
-		let row = Array(m1.colomns);
-		for (let j = 0; j < m1.colomns; j++) {
-			row[j] = m1.values[i][j] + m2.values[i][j]
-		}
-		m3[i] = row
-	}
-	return matrix(m1.rows, m1.colomns, m3)
-}
-const subtract = (m1, m2) => {
-	assert(m1.rows === m2.rows && m1.colomns === m2.colomns)
-	let m3 = Array(m1.rows)
-	for (let i = 0; i < m1.rows; i++) {
-		let row = Array(m1.colomns);
-		for (let j = 0; j < m1.colomns; j++) {
-			row[j] = m1.values[i][j] - m2.values[i][j]
-		}
-		m3[i] = row
-	}
-	return matrix(m1.rows, m1.colomns, m3)
+	return matrix(row, col, m, isvec)
 }
 
-const apply = (mat, f) => {
-	let m = mat.values;
-	for (let i = 0; i < mat.rows; i++) {
-		for (let j = 0; j < mat.colomns; j++) {
-			m[i][j] = f(m[i][j])
-		}
-	}
-	return matrix(mat.rows, mat.colomns, m)
-}
-const hadamard = (m1, m2) => {
-	assert(m1.rows === m2.rows && m1.colomns === m2.colomns)
-	let m3 = Array(m1.rows)
-	for (let i = 0; i < m1.rows; i++) {
-		let row = Array(m1.colomns);
-		for (let j = 0; j < m1.colomns; j++) {
-			row[j] = m1.values[i][j] * m2.values[i][j]
-		}
-		m3[i] = row
-	}
-	return matrix(m1.rows, m1.colomns, m3)
-}
-const transpose = (mat) => {
-	let m = Array(mat.colomns)
-	for(let i = 0; i < mat.colomns; i++) {
-		let row = Array(mat.rows)
-		for(let j = 0; j < mat.rows; j++) {
-			row[j] = mat.values[j][i]
-		}
-		m[i] = row
-	}
-	return matrix(mat.colomns, mat.rows, m)
-}
-
-module.exports = { matrix, getrow, getcol, dot, multiply, apply, add, constant, random, vec, subtract, get, transpose, hadamard, set}
+module.exports = {matrix, matrix_from_array, constant, random}
