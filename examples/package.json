@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "learningml": "^0.9.1"
+    "learningml": "^1.0.3"
   }
 }
