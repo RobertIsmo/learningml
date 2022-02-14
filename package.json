@@ -1,0 +1,19 @@
+{
+  "name": "learningml",
+  "version": "0.9.1",
+  "description": "A machine learning library for education purposes only.",
+  "main": "learningml.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RobertIsmo/learningml.git"
+  },
+  "author": "Robert Ismo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RobertIsmo/learningml/issues"
+  },
+  "homepage": "https://github.com/RobertIsmo/learningml#readme"
+}
