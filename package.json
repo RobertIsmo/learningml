@@ -1,6 +1,6 @@
 {
   "name": "learningml",
-  "version": "0.8.76",
+  "version": "0.9.1",
   "description": "A machine learning library for education purposes only.",
   "main": "learningml.js",
   "scripts": {
