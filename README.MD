@@ -5,9 +5,11 @@ Learningml is an open-source machine learning library for training models, curre
 **Works in the browser or in node**
 
 extremely flexible, with a focus on having minimal dependencies.
+
 **Easy to work with**
 
 made from the ground up in javascript, manipulate objects in an intuative way.
+
 **Constantly expanding**
 
 Plans to add gpu acceleration, alternative neural network architectures, and more!
